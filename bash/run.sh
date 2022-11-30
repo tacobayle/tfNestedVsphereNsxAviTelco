@@ -1,0 +1,1 @@
+cd ~/tfNestedVsphereNsxAviTelco ; /bin/bash destroy.sh ; cd ~ ; rm -fr tfNestedVsphereNsxAviTelco ; git clone https://github.com/tacobayle/tfNestedVsphereNsxAviTelco ; cd tfNestedVsphereNsxAviTelco ; /bin/bash apply.sh
