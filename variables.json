@@ -33,7 +33,7 @@
     },
   "dns": {
     "nameserver": "10.41.134.154",
-    "domain": "avitelco.com"
+    "domain": "avi-telco.com"
   },
   "ntp": {
     "server": "10.23.108.1",
