@@ -637,6 +637,8 @@ echo "NSX url: https://$(jq -c -r .nsx.manager.basename $jsonFile).$(jq -c -r .d
 echo "To access Avi UI:" | tee -a output.txt
 echo "  - configure $(jq -c -r .vcenter.dvs.portgroup.management.external_gw_ip $jsonFile) as a socks proxy" | tee -a output.txt
 echo "  - Avi url: https://$(jq -c -r .avi.controller.cidr avi.json | cut -d'/' -f1 | cut -d'.' -f1-3).$(jq -c -r .avi.controller.ip avi.json)" | tee -a output.txt
+echo "To ssh your TKG cluster node(s):" | tee -a output.txt
+echo "  - ssh capv@ip_of_tanzu_node -i $(jq -c -r .tkg.clusters.workloads[0].public_key_path $jsonFile)" | tee -a output.txt
 echo "To Access your TKG cluster:" | tee -a output.txt
 echo '  - tanzu cluster list' | tee -a output.txt
 echo "  - tanzu cluster kubeconfig get $(jq -c -r .tkg.clusters.workloads[0].name $jsonFile)" | tee -a output.txt
