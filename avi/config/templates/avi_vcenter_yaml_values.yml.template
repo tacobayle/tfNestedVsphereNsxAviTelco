@@ -36,5 +36,7 @@ vcenter:
       ${networks}
     service_engine_groups: |
       ${service_engine_groups}
+    contexts: |
+      ${contexts}
     virtual_services: |
       ${virtual_services}

@@ -33,6 +33,7 @@ data "template_file" "avi_values" {
     cloud_name = var.avi.config.cloud.name
     networks = jsonencode(var.avi.config.cloud.networks)
     service_engine_groups = jsonencode(var.avi.config.service_engine_groups)
+    contexts = jsonencode(var.avi.config.cloud.contexts)
     virtual_services = jsonencode(var.avi.config.virtual_services)
   }
 }

@@ -53,6 +53,65 @@ test_if_ref_from_list_exists_in_another_list () {
   if [[ $check_status -eq 0 ]] ; then echo "$6$ref" ; exit 255 ; fi
 }
 #
+test_if_ref_exists_in_another_list () {
+  # $1 ref to check
+  # $2 list + ref to check against
+  # $3 json file
+  # $4 message to display
+  # $5 message to display if match
+  # $6 error to display
+  echo $4; check_status=0
+  for item_name in $(jq -c -r $2 $3)
+  do
+    if [[ $1 = $item_name ]] ; then check_status=1 ; echo "$5found: $1, OK"; fi
+  done
+  if [[ $check_status -eq 0 ]] ; then echo "$6$1" ; exit 255 ; fi
+}
+#
+test_if_ref_exists_in_another_list_sent () {
+  # $1 ref to check
+  # $2 list + ref to check against
+  # $3 json file
+  # $4 message to display
+  # $5 message to display if match
+  # $6 error to display
+  echo $4; check_status=0
+  for item_name in $(echo $2 | jq -c -r .[]$3)
+  do
+    if [[ $1 = $item_name ]] ; then check_status=1 ; echo "$5found: $1, OK"; fi
+  done
+  if [[ $check_status -eq 0 ]] ; then echo "$6$1" ; exit 255 ; fi
+}
+#
+get_value_from_list_when_match () {
+  # $1 value to check
+  # $2 key to check
+  # $3 list + ref to check against
+  # $4 associated key to return
+  # $5 json file
+  # $6 message to display
+  # $7 message to display in case of success
+  # $8 message to display in case of failure
+  # $value_to_return
+  echo $6 ; check_status=0
+  for item in $(jq -c -r $3 $5)
+  do
+    if [[ $1 = $(echo $item | jq -c -r .$2) ]] ; then check_status=1 ; value_to_return=$(echo $item | jq -c -r .$4) ; fi
+  done
+  if [[ $check_status -eq 0 ]] || [[ $value_to_return == "null" ]] ; then echo $8 ; exit 255 ; fi
+  echo $7 $value_to_return
+}
+#
+nextip(){
+    IFS=$' \t\n'
+    IP=$1
+    IP_HEX=$(printf '%.2X%.2X%.2X%.2X\n' `echo $IP | sed -e 's/\./ /g'`)
+    NEXT_IP_HEX=$(printf %.8X `echo $(( 0x$IP_HEX + 1 ))`)
+    NEXT_IP=$(printf '%d.%d.%d.%d\n' `echo $NEXT_IP_HEX | sed -r 's/(..)/0x\1 /g'`)
+    echo "$NEXT_IP"
+    IFS=$'\n'
+}
+#
 # Sanity checks
 #
 echo ""
@@ -156,7 +215,6 @@ do
 done
 nsx_json=$(jq -c -r . $jsonFile | jq '. | del (.nsx.config.segments)')
 nsx_json=$(echo $nsx_json | jq '.nsx.config += {"segments": '$(echo $nsx_segments)'}')
-echo $nsx_json | jq . | tee nsx.json > /dev/null
 #
 echo "   +++ Checking NSX if the amount of mgmt edge IP(s) are enough for all the edge node(s)..."
 ip_count_mgmt_edge=$(jq -c -r '.vcenter.dvs.portgroup.management.nsx_edge | length' $jsonFile)
@@ -215,6 +273,53 @@ do
 done
 echo "   ++++++ Amount of external vip is $(jq -c -r '.vcenter.dvs.portgroup.nsx_external.tier0_vips | length' $jsonFile), amount of vip needed: $tier0_vips, OK"
 #
+#
+nsx_tiers0="[]"
+echo "   +++ Creating BGP neighbors on each tier0..."
+for tier0 in $(jq -c -r .nsx.config.tier0s[] $jsonFile)
+do
+  if [[ $(echo $tier0 | jq 'has("bgp")') == "true" ]] ; then
+    test_if_ref_exists_in_another_list "$(echo $tier0 | jq -c -r .bgp.avi_context_ref)" \
+                                                 ".avi.config.cloud.contexts[].name" \
+                                                 "$jsonFile" \
+                                                 "   ++++++ Checking Context ref in tier0 BGP config" \
+                                                 "   +++++++++ Context " \
+                                                 "   +++++++++ERROR+++++++++ Avi Context not found: "
+    get_value_from_list_when_match  "$(echo $tier0 | jq -c -r .bgp.avi_context_ref)" \
+                                    "name" \
+                                    ".avi.config.cloud.contexts[]" \
+                                    "local_as" \
+                                    "$jsonFile" \
+                                    "   ++++++ Searching for 'local_as' value in '.avi.config.cloud.contexts[]' when 'name' value equals '$(echo $tier0 | jq -c -r .bgp.avi_context_ref)'" \
+                                    "   +++++++++ found 'local_as' value equals to" \
+                                    "   +++++++++ERROR+++++++++ 'local_as' not found"
+    local_as=$value_to_return
+    get_value_from_list_when_match  "$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.name $jsonFile)-pg)" \
+                                        "name" \
+                                        ".avi.config.cloud.networks[]" \
+                                        "avi_ipam_pool" \
+                                        "$jsonFile" \
+                                        "   ++++++ Searching for 'avi_ipam_pool' value in '.avi.config.cloud.networks[]' when 'name' value equals '$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.name $jsonFile)-pg)'" \
+                                        "   +++++++++ found 'avi_ipam_pool' value equals to" \
+                                        "   +++++++++ERROR+++++++++ 'avi_ipam_pool' not found"
+    avi_ipam_pool_ip=$(echo $value_to_return | cut -d"-" -f1)
+    avi_ipam_pool_end=$(echo $value_to_return | cut -d"-" -f2)
+    neighbors="{\"neighbors\": []}"
+    neighbors=$(echo $neighbors | jq -c -r '.neighbors += [{"neighbor_address": "'$(echo $avi_ipam_pool_ip)'", "remote_as_num": "'$(echo $local_as)'"}]')
+    while [[ $avi_ipam_pool_ip != $avi_ipam_pool_end ]]
+    do
+      avi_ipam_pool_ip=$(nextip $avi_ipam_pool_ip)
+      neighbors=$(echo $neighbors | jq -c -r '.neighbors += [{"neighbor_address": "'$(echo $avi_ipam_pool_ip)'", "remote_as_num": "'$(echo $local_as)'"}]')
+    done
+    tier0=$(echo $tier0 | jq -c -r '.bgp += '$(echo $neighbors | jq -c -r)'')
+    nsx_tiers0=$(echo $nsx_tiers0 | jq '. += ['$(echo $tier0)']')
+  else
+    nsx_tiers0=$(echo $nsx_tiers0 | jq '. += ['$(echo $tier0)']')
+  fi
+done
+nsx_json=$(jq -c -r . $jsonFile | jq '. | del (.nsx.config.tier0s)')
+nsx_json=$(echo $nsx_json | jq '.nsx.config += {"tier0s": '$(echo $nsx_tiers0)'}')
+#
 test_if_ref_from_list_exists_in_another_list ".nsx.config.tier1s[].tier0" \
                                              ".nsx.config.tier0s[].display_name" \
                                              "$jsonFile" \
@@ -228,6 +333,7 @@ test_if_ref_from_list_exists_in_another_list ".nsx.config.segments_overlay[].tie
                                              "   +++ Checking Tiers 1 in segments_overlay" \
                                              "   ++++++ Tier1 " \
                                              "   ++++++ERROR++++++ Tier1 not found: "
+echo $nsx_json | jq . | tee nsx.json > /dev/null
 #
 # check Avi Parameters
 rm -f avi.json
@@ -330,7 +436,51 @@ if [[ $(echo $avi_json | jq -c -r '.avi.config.virtual_services.dns | length') -
 fi
 avi_json=$(echo $avi_json | jq '. | del (.avi.config.virtual_services.dns)')
 avi_json=$(echo $avi_json | jq '.avi.config.virtual_services += {"dns": '$(echo $avi_dns_vs)'}')
-echo $avi_json | jq . | tee avi.json > /dev/null
+#
+avi_json=$(echo $avi_json | jq '. | del (.avi.config.cloud.contexts)')
+ip_if_edge_index=0
+peers="[]"
+for tier0 in $(jq -c -r .nsx.config.tier0s[] $jsonFile)
+do
+  if [[ $(echo $tier0 | jq 'has("bgp")') == "true" ]] ; then
+    remote_as=$(echo $tier0 | jq -r -c .bgp.local_as_num)
+    for context in $(jq -c -r '.avi.config.cloud.contexts[]' $jsonFile)
+    do
+      context_index=0
+      if [[ $(echo $context | jq -c -r .name) == $(echo $tier0 | jq -c -r .bgp.avi_context_ref) ]] ; then
+        test_if_ref_exists_in_another_list_sent      "$(echo $tier0 | jq -r -c .bgp.avi_peer_label)" \
+                                                     "$(echo $context | jq -c -r .routing_options)" \
+                                                     ".label" \
+                                                     "   ++++++ Checking label ref in tier0 BGP config" \
+                                                     "   +++++++++ label " \
+                                                     "   +++++++++ERROR+++++++++ Avi BGP label  not found: "
+      fi
+      for interface in $(echo $tier0 | jq -c -r '.interfaces[]')
+      do
+        peers=$(echo $peers | jq -c -r '. += [{"advertise_snat_ip": true,
+                                                    "advertise_vip": true,
+                                                    "advertisement_interval": 5,
+                                                    "bfd": false,
+                                                    "connect_timer": 10,
+                                                    "ebgp_multihop": 0,
+                                                    "label": "'$(echo $tier0 | jq -r -c .bgp.avi_peer_label)'",
+                                                    "network_ref": "/api/network/?name='$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.name $jsonFile)-pg)'",
+                                                    "peer_ip": {"addr": "'$(echo $(jq -c -r '.vcenter.dvs.portgroup.nsx_external.tier0_ips['$ip_if_edge_index']' $jsonFile))'", "type": "V4"},
+                                                    "remote_as": "'$(echo $remote_as)'",
+                                                    "shutdown": false,
+                                                    "subnet": {"ip_addr": {"addr": "'$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.cidr $jsonFile) | cut -d"/" -f1 )'","type": "V4"},"mask": "'$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.cidr $jsonFile) | cut -d"/" -f2 )'"}
+                                                    }]')
+        ((ip_if_edge_index++))
+      done
+      ((context_index++))
+      context=$(echo $context | jq '.peers += '$(echo $peers)'')
+    done
+  else
+    ip_if_edge_index=$((ip_if_edge_index+$(echo $tier0 | jq -c -r '.interfaces | length')))
+  fi
+done
+avi_json=$(echo $avi_json | jq '.avi.config.cloud.contexts += ['$(echo $context | jq -c -r)']')
+#
 ## checking if Avi IPAM Networks exists in Avi cloud networks
 test_if_ref_from_list_exists_in_another_list ".avi.config.ipam.networks[]" \
                                              ".avi.config.cloud.networks[].name" \
@@ -356,6 +506,7 @@ if [ $(jq -c -r '.avi.config.virtual_services.http | length' $jsonFile) -gt 0 ] 
                                                "   ++++++ Service Engine Group " \
                                                "   ++++++ERROR++++++ segment not found: "
 fi
+echo $avi_json | jq . | tee avi.json > /dev/null
 #
 # check TKG Parameters
 if [[ $(jq -c -r .tkg.prep $jsonFile) == true ]] ; then

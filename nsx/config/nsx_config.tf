@@ -111,6 +111,13 @@ resource "null_resource" "create_tier0s" {
   }
 }
 
+resource "null_resource" "create_tier0s_bgp" {
+  depends_on = [null_resource.create_tier0s]
+  provisioner "local-exec" {
+    command = "/bin/bash bash/bgp.sh"
+  }
+}
+
 data "nsxt_policy_tier0_gateway" "tier0s_for_tier1s" {
   depends_on = [null_resource.create_tier0s]
   count = length(var.nsx.config.tier1s)
