@@ -27,6 +27,7 @@ do
   new_json=$(echo $new_json | jq -c -r '. | del (.interfaces)')
   new_json=$(echo $new_json | jq -c -r '. | del (.static_routes)')
   new_json=$(echo $new_json | jq -c -r '. | del (.ha_vips)')
+  new_json=$(echo $new_json | jq -c -r '. | del (.bgp)')
   echo "creating the tier0 called $(echo $tier0 | jq -r -c .display_name)"
   curl -k -s -X PUT -b cookies.txt -H "`grep X-XSRF-TOKEN headers.txt`" -H "Content-Type: application/json" -d $(echo $new_json) https://$nsx_ip/policy/api/v1/infra/tier-0s/$(echo $tier0 | jq -r -c .display_name)
 done
