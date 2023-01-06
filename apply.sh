@@ -170,9 +170,11 @@ if [[ $(jq -c -r '.avi.config.cloud.additional_subnets | length' $jsonFile) -gt 
       count=0
       for tier0 in $(jq -c -r .nsx.config.tier0s[] $jsonFile)
       do
-        if [[ $(echo $subnet | jq -c -r .bgp_label) == $(echo $tier0 | jq -c -r .display_name) ]] ; then
-          new_routes=$(echo $new_routes | jq '. += [{"to": "'$(echo $subnet | jq -c -r .cidr)'", "via": "'$(jq -c -r .vcenter.dvs.portgroup.nsx_external.tier0_vips["$count"] $jsonFile)'"}]')
-          echo "   +++ Route to $(echo $subnet | jq -c -r .cidr) via $(jq -c -r .vcenter.dvs.portgroup.nsx_external.tier0_vips["$count"] $jsonFile) added: OK"
+        if [[ $(echo $tier0 | jq 'has("bgp")') == "true" ]] ; then
+          if [[ $(echo $subnet | jq -c -r .bgp_label) == $(echo $tier0 | jq -c -r .bgp.avi_peer_label) ]] ; then
+            new_routes=$(echo $new_routes | jq '. += [{"to": "'$(echo $subnet | jq -c -r .cidr)'", "via": "'$(jq -c -r .vcenter.dvs.portgroup.nsx_external.tier0_vips["$count"] $jsonFile)'"}]')
+            echo "   +++ Route to $(echo $subnet | jq -c -r .cidr) via $(jq -c -r .vcenter.dvs.portgroup.nsx_external.tier0_vips["$count"] $jsonFile) added: OK"
+          fi
         fi
         ((count++))
       done
@@ -458,18 +460,18 @@ do
       for interface in $(echo $tier0 | jq -c -r '.interfaces[]')
       do
         peers=$(echo $peers | jq -c -r '. += [{"advertise_snat_ip": true,
-                                                    "advertise_vip": true,
-                                                    "advertisement_interval": 5,
-                                                    "bfd": false,
-                                                    "connect_timer": 10,
-                                                    "ebgp_multihop": 0,
-                                                    "label": "'$(echo $tier0 | jq -r -c .bgp.avi_peer_label)'",
-                                                    "network_ref": "/api/network/?name='$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.name $jsonFile)-pg)'",
-                                                    "peer_ip": {"addr": "'$(echo $(jq -c -r '.vcenter.dvs.portgroup.nsx_external.tier0_ips['$ip_if_edge_index']' $jsonFile))'", "type": "V4"},
-                                                    "remote_as": "'$(echo $remote_as)'",
-                                                    "shutdown": false,
-                                                    "subnet": {"ip_addr": {"addr": "'$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.cidr $jsonFile) | cut -d"/" -f1 )'","type": "V4"},"mask": "'$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.cidr $jsonFile) | cut -d"/" -f2 )'"}
-                                                    }]')
+                                              "advertise_vip": true,
+                                              "advertisement_interval": 5,
+                                              "bfd": false,
+                                              "connect_timer": 10,
+                                              "ebgp_multihop": 0,
+                                              "label": "'$(echo $tier0 | jq -r -c .bgp.avi_peer_label)'",
+                                              "network_ref": "/api/network/?name='$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.name $jsonFile)-pg)'",
+                                              "peer_ip": {"addr": "'$(echo $(jq -c -r '.vcenter.dvs.portgroup.nsx_external.tier0_ips['$ip_if_edge_index']' $jsonFile))'", "type": "V4"},
+                                              "remote_as": "'$(echo $remote_as)'",
+                                              "shutdown": false,
+                                              "subnet": {"ip_addr": {"addr": "'$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.cidr $jsonFile) | cut -d"/" -f1 )'","type": "V4"},"mask": "'$(echo $(jq -c -r .vcenter.dvs.portgroup.nsx_external.cidr $jsonFile) | cut -d"/" -f2 )'"}
+                                              }]')
         ((ip_if_edge_index++))
       done
       ((context_index++))
@@ -480,6 +482,51 @@ do
   fi
 done
 avi_json=$(echo $avi_json | jq '.avi.config.cloud.contexts += ['$(echo $context | jq -c -r)']')
+#
+# rewriting additional_subnets to feed proper Avi formatting
+avi_json=$(echo $avi_json | jq '. | del (.avi.config.cloud.additional_subnets)')
+additional_subnets="[]"
+for network in $(jq -c -r '.avi.config.cloud.additional_subnets[]' $jsonFile)
+do
+  configured_subnets="[]"
+  for subnet in $(echo $network | jq -c -r .subnets[])
+  do
+    configured_subnets=$(echo $configured_subnets | jq -c -r '. +=  [
+                                                                      {
+                                                                        "prefix":
+                                                                                  {
+                                                                                    "mask": "'$(echo $subnet | jq -c -r .cidr | cut -d"/" -f2 )'",
+                                                                                    "ip_addr":
+                                                                                      {
+                                                                                        "type": "'$(echo $subnet | jq -c -r .type )'",
+                                                                                        "addr": "'$(echo $subnet | jq -c -r .cidr | cut -d"/" -f1 )'"
+                                                                                      },
+                                                                                  },
+                                                                        "static_ip_ranges":
+                                                                          [
+                                                                            {
+                                                                              "range":
+                                                                                {
+                                                                                  "begin":
+                                                                                    {
+                                                                                      "type": "'$(echo $subnet | jq -c -r .type )'",
+                                                                                      "addr": "'$(echo $subnet | jq -c -r .range | cut -d"-" -f1 )'"
+                                                                                    },
+                                                                                    "end":
+                                                                                      {
+                                                                                        "type": "'$(echo $subnet | jq -c -r .type )'",
+                                                                                        "addr": "'$(echo $subnet | jq -c -r .range | cut -d"-" -f2 )'"
+                                                                                      }
+                                                                                },
+                                                                              "type": "'$(echo $subnet | jq -c -r .range_type )'"
+                                                                            }
+                                                                          ]
+                                                                      }
+                                                                    ]')
+  done
+  additional_subnets=$(echo $additional_subnets | jq -c -r '. +=  [ {"name": "'$(echo $network | jq -c -r .name_ref )'", "configured_subnets": '$(echo $configured_subnets)'}]')
+done
+avi_json=$(echo $avi_json | jq '.avi.config.cloud.additional_subnets += ['$(echo $additional_subnets | jq -c -r)']')
 #
 ## checking if Avi IPAM Networks exists in Avi cloud networks
 test_if_ref_from_list_exists_in_another_list ".avi.config.ipam.networks[]" \
@@ -771,6 +818,10 @@ if [[ $(jq -c -r .external_gw.create $jsonFile) == true ]] && [[ $(jq -c -r .tkg
   tf_init_apply "Building TKG workload cluster(s) - This should take around 40 minutes - for 2 clusters" tkg/workload_clusters_builds ../../logs/tf_tkg_workload_clusters_builds.stdout ../../logs/tf_tkg_workload_clusters_builds.errors ../../tkg.json
 fi
 #
+# Patching TKG workload-clusters
+#
+tf_init_apply "Patching TKG workload cluster(s) - This should take around 5 minutes - for 2 clusters" tkg/workload_patching ../../logs/tf_tkg_workload_patching.stdout ../../logs/tf_tkg_workload_patching.errors ../../tkg.json
+#
 # Templating AKO and K8s yaml files
 #
 if [[ $(jq -c -r .external_gw.create $jsonFile) == true ]] && [[ $(jq -c -r .tkg.clusters.ako_template $jsonFile) == true ]] ; then
@@ -788,12 +839,13 @@ echo "NSX url: https://$(jq -c -r .nsx.manager.basename $jsonFile).$(jq -c -r .d
 echo "To access Avi UI:" | tee -a output.txt
 echo "  - configure $(jq -c -r .vcenter.dvs.portgroup.management.external_gw_ip $jsonFile) as a socks proxy" | tee -a output.txt
 echo "  - Avi url: https://$(jq -c -r .avi.controller.cidr avi.json | cut -d'/' -f1 | cut -d'.' -f1-3).$(jq -c -r .avi.controller.ip avi.json)" | tee -a output.txt
-echo "To ssh your TKG cluster node(s):" | tee -a output.txt
-echo "  - ssh capv@ip_of_tanzu_node -i $(jq -c -r .tkg.clusters.workloads[0].public_key_path $jsonFile)" | tee -a output.txt
 echo "To Access your TKG cluster:" | tee -a output.txt
 echo '  - tanzu cluster list' | tee -a output.txt
-echo "  - tanzu cluster kubeconfig get $(jq -c -r .tkg.clusters.workloads[0].name $jsonFile)" | tee -a output.txt
+echo "  - tanzu cluster kubeconfig get $(jq -c -r .tkg.clusters.workloads[0].name $jsonFile) --admin" | tee -a output.txt
 echo "  - kubectl config use-context $(jq -c -r .tkg.clusters.workloads[0].name $jsonFile)-admin@$(jq -c -r .tkg.clusters.workloads[0].name $jsonFile)" | tee -a output.txt
+echo "To ssh your TKG cluster node(s):" | tee -a output.txt
+echo "  - kubectl get nodes -o json | jq -r .items[].status.addresses[1].address" | tee -a output.txt
+echo "  - ssh capv@ip_of_tanzu_node -i $(jq -c -r .tkg.clusters.workloads[0].public_key_path $jsonFile)" | tee -a output.txt
 echo "To Add Docker registry Account to your TKG cluster:" | tee -a output.txt
 echo '  - kubectl create secret docker-registry docker --docker-server=docker.io --docker-username=******** --docker-password=******** --docker-email=********' | tee -a output.txt
 echo '  - kubectl patch serviceaccount default -p "{\"imagePullSecrets\": [{\"name\": \"docker\"}]}"' | tee -a output.txt

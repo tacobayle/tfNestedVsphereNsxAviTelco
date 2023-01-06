@@ -293,3 +293,22 @@ resource "null_resource" "generate_avi_cert" {
     ]
   }
 }
+
+resource "null_resource" "adding_tkg_workloads_private_keys" {
+  depends_on = [null_resource.adding_ip_to_nsx_overlay_and_nsx_overlay_edge]
+  count = length(var.tkg.clusters.workloads)
+
+  connection {
+    host        = var.vcenter.dvs.portgroup.management.external_gw_ip
+    type        = "ssh"
+    agent       = false
+    user        = var.external_gw.username
+    private_key = file(var.external_gw.private_key_path)
+  }
+
+  provisioner "file" {
+    file = var.tkg.clusters.workloads[count.index].private_key_path
+    destination = "/home/${var.external_gw.username}/.ssh/${var.tkg.clusters.workloads[count.index].private_key_path}"
+  }
+
+}

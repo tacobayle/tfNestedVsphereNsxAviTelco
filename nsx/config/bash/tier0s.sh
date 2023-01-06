@@ -104,9 +104,9 @@ done
 # tier 0 ha-vip config
 #
 ip_index=0
-new_json="{\"display_name\": \"default\", \"ha_vip_configs\": []}"
 for tier0 in $(jq -c -r .nsx.config.tier0s[] $jsonFile)
 do
+  new_json="{\"display_name\": \"default\", \"ha_vip_configs\": []}"
   if [[ $(echo $tier0 | jq 'has("ha_vips")') == "true" ]] ; then
     for cluster in $(curl -k -s -X GET -b cookies.txt -H "`grep X-XSRF-TOKEN headers.txt`" -H "Content-Type: application/json" https://$nsx_ip/api/v1/edge-clusters | jq -c -r .results[])
     do

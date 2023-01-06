@@ -559,7 +559,7 @@
     "config": {
       "create": true,
       "avi_config_repo": "https://github.com/tacobayle/ansibleAviConfig",
-      "avi_config_tag": "v1.87",
+      "avi_config_tag": "v1.88",
       "sslkeyandcertificate": [
         {
           "name": "tkg_cert",
@@ -660,13 +660,15 @@
                 "cidr": "1.1.1.0/24",
                 "range": "1.1.1.1-1.1.1.10",
                 "type": "V4",
-                "bgp_label": "vrf-1"
+                "bgp_label": "vrf-1",
+                "range_type": "STATIC_IPS_FOR_VIP"
               },
               {
                 "cidr": "2.2.2.0/24",
                 "range": "2.2.2.1-2.2.2.10",
                 "type": "V4",
-                "bgp_label": "vrf-2"
+                "bgp_label": "vrf-2",
+                "range_type": "STATIC_IPS_FOR_VIP"
               }
             ]
           }
@@ -811,6 +813,7 @@
       "workloads": [
         {
           "name": "tkg-cluster-workload-1",
+          "ssh_username": "capv",
           "antrea_node_port_local": "true",
           "cluster_cidr": "100.96.0.0/11",
           "avi_control_plane_ha_provider": "true",
@@ -818,6 +821,7 @@
           "vcenter_folder": "tkg-cluster-workload-1",
           "vcenter_resource_pool": "tkg-cluster-workload-1",
           "vsphere_network": "segment-tkg",
+          "private_key_path": "/home/ubuntu/.ssh/cloudKey",
           "public_key_path": "/home/ubuntu/.ssh/cloudKey.pub",
           "worker_disk": "20",
           "worker_memory": "4096",
@@ -830,6 +834,7 @@
         },
         {
           "name": "tkg-cluster-workload-2",
+          "ssh_username": "capv",
           "antrea_node_port_local": "true",
           "cluster_cidr": "100.96.0.0/11",
           "avi_control_plane_ha_provider": "true",
@@ -837,6 +842,7 @@
           "vcenter_folder": "tkg-cluster-workload-2",
           "vcenter_resource_pool": "tkg-cluster-workload-2",
           "vsphere_network": "segment-tkg",
+          "private_key_path": "/home/ubuntu/.ssh/cloudKey",
           "public_key_path": "/home/ubuntu/.ssh/cloudKey.pub",
           "worker_disk": "20",
           "worker_memory": "4096",
