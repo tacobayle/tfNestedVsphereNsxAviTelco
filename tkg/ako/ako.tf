@@ -25,6 +25,7 @@ data "template_file" "workload_values" {
     default_peer_label = var.tkg.clusters.ako_default_bgp_peer_label_ref
     networkName = var.tkg.clusters.ako_vip_network_name_ref
     cidr = var.tkg.clusters.ako_vip_network_cidr # added by apply.sh
+    serviceType = var.tkg.clusters.ako_service_type
     serviceEngineGroupName = var.tkg.clusters.ako_service_engine_group_ref
     controllerVersion = var.avi.controller.version
     controllerHost = cidrhost(var.tkg.avi_cidr, var.tkg.avi_ip)

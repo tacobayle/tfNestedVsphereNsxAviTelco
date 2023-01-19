@@ -56,7 +56,7 @@ NetworkSettings:
 L7Settings:
   defaultIngController: 'true'
   noPGForSNI: false # Switching this knob to true, will get rid of poolgroups from SNI VSes. Do not use this flag, if you don't want http caching. This will be deprecated once the controller support caching on PGs.
-  serviceType: NodePortLocal # enum NodePort|ClusterIP|NodePortLocal
+  serviceType: ${serviceType} # enum NodePort|ClusterIP|NodePortLocal
   shardVSSize: LARGE   # Use this to control the layer 7 VS numbers. This applies to both secure/insecure VSes but does not apply for passthrough. ENUMs: LARGE, MEDIUM, SMALL, DEDICATED
   passthroughShardSize: SMALL   # Control the passthrough virtualservice numbers using this ENUM. ENUMs: LARGE, MEDIUM, SMALL
   enableMCI: 'false' # Enabling this flag would tell AKO to start processing multi-cluster ingress objects.
