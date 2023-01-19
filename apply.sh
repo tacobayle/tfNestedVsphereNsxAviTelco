@@ -869,6 +869,7 @@ do
 done
 echo "To Add avi-system name space:" | tee -a output.txt
 echo "  - kubectl create ns avi-system" | tee -a output.txt
+echo "AKO with ClusterIp requires a dedicated Service Engine Group per K8s workload cluster: The current deployment has created only one Service Engine Group" | tee -a output.txt
 echo "To Add AKO leveraging helm Install (from the external-gw):" | tee -a output.txt
 echo "  - helm --debug install ako/ako --generate-name --version $(jq -c -r .tkg.clusters.ako_version $jsonFile) -f path-to-values.yml --namespace=avi-system" | tee -a output.txt
 echo "Create InfraSetting CRD (from the external-gw):" | tee -a output.txt
