@@ -308,7 +308,7 @@ resource "null_resource" "adding_tkg_workloads_private_keys" {
 
   provisioner "file" {
     source = var.tkg.clusters.workloads[count.index].private_key_path
-    destination = "/home/${var.external_gw.username}/.ssh/${var.tkg.clusters.workloads[count.index].private_key_path}"
+    destination = "/home/${var.external_gw.username}/.ssh/${basename(var.tkg.clusters.workloads[count.index].private_key_path)}"
   }
 
 }
