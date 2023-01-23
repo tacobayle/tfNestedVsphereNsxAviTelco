@@ -13,6 +13,32 @@ resource "null_resource" "transfer_cnf_files" {
       "mkdir yaml"
     ]
   }
+
+  provisioner "file" {
+    source      = "yaml/k8s-cnf1.yml"
+    destination = "yaml/k8s-cnf1.yml"
+  }
+
+  provisioner "file" {
+    source      = "yaml/k8s-cnf2.yml"
+    destination = "yaml/k8s-cnf2.yml"
+  }
+
+  provisioner "file" {
+    source      = "yaml/sctp_client.yml"
+    destination = "yaml/sctp_client.yml"
+  }
+
+  provisioner "file" {
+    source      = "yaml/svc_sctp.yml"
+    destination = "yaml/svc_sctp.yml"
+  }
+
+  provisioner "file" {
+    source      = "yaml/k8s_sctp_deployment.yml"
+    destination = "yaml/k8s_sctp_deployment.yml"
+  }
+
 }
 
 
@@ -112,4 +138,3 @@ resource "null_resource" "transfer_other_files" {
   }
 
 }
-
