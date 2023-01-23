@@ -524,9 +524,9 @@ do
                                                                       }
                                                                     ]')
   done
-  additional_subnets=$(echo $additional_subnets | jq -c -r '. +=  [ {"name": "'$(echo $network | jq -c -r .name_ref )'", "configured_subnets": '$(echo $configured_subnets)'}]')
+  additional_subnets=$(echo $additional_subnets | jq -c -r '. +=  [ {"name_ref": "'$(echo $network | jq -c -r .name_ref )'", "configured_subnets": '$(echo $configured_subnets)'}]')
 done
-avi_json=$(echo $avi_json | jq '.avi.config.cloud.additional_subnets += ['$(echo $additional_subnets | jq -c -r)']')
+avi_json=$(echo $avi_json | jq '.avi.config.cloud.additional_subnets += '$(echo $additional_subnets | jq -c -r)'')
 #
 ## checking if Avi IPAM Networks exists in Avi cloud networks
 test_if_ref_from_list_exists_in_another_list ".avi.config.ipam.networks[]" \
