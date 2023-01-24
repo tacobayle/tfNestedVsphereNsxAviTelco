@@ -311,4 +311,10 @@ resource "null_resource" "adding_tkg_workloads_private_keys" {
     destination = "/home/${var.external_gw.username}/.ssh/${basename(var.tkg.clusters.workloads[count.index].private_key_path)}"
   }
 
+  provisioner "remote-exec" {
+    inline = [
+      "chmod 500 /home/${var.external_gw.username}/.ssh/${basename(var.tkg.clusters.workloads[count.index].private_key_path)}",
+    ]
+  }
+
 }
