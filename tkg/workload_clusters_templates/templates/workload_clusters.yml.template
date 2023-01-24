@@ -1,4 +1,5 @@
 AVI_CONTROL_PLANE_HA_PROVIDER: ${avi_control_plane_ha_provider}
+CNI: ${cni}
 ANTREA_NODEPORTLOCAL: ${antrea_node_port_local}
 ANTREA_NODEPORTLOCAL_ENABLED: ${antrea_node_port_local}
 CLUSTER_CIDR: ${cluster_cidr}

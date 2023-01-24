@@ -3,6 +3,7 @@ data "template_file" "workload" {
   template = file("templates/workload_clusters.yml.template")
   vars = {
     name = var.tkg.clusters.workloads[count.index].name
+    cni = var.tkg.clusters.workloads[count.index].cni
     antrea_node_port_local = var.tkg.clusters.workloads[count.index].antrea_node_port_local
     cluster_cidr = var.tkg.clusters.workloads[count.index].cluster_cidr
     avi_control_plane_ha_provider = var.tkg.clusters.workloads[count.index].avi_control_plane_ha_provider

@@ -814,6 +814,7 @@
       "workloads": [
         {
           "name": "tkg-cluster-workload-1",
+          "cni": "antrea",
           "ssh_username": "capv",
           "antrea_node_port_local": "true",
           "cluster_cidr": "100.96.0.0/11",
@@ -835,6 +836,7 @@
         },
         {
           "name": "tkg-cluster-workload-2",
+          "cni": "calico",
           "ssh_username": "capv",
           "antrea_node_port_local": "true",
           "cluster_cidr": "100.96.0.0/11",
