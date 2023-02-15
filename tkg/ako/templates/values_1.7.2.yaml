@@ -70,7 +70,7 @@ L4Settings:
 ### This section outlines settings on the Avi controller that affects AKO's functionality.
 ControllerSettings:
   serviceEngineGroupName: tkg   # Name of the ServiceEngine Group.
-  controllerVersion: '21.1.4' # The controller API version
+  controllerVersion: '22.1.3' # The controller API version
   cloudName: Default-Cloud # The configured cloud name on the Avi controller.
   controllerHost: '200.100.11.11' # IP address or Hostname of Avi Controller
   tenantName: tkg   # Name of the tenant where all the AKO objects will be created in AVI.

@@ -191,7 +191,7 @@ The following variables need to be configured:
 - NSX Manager:
   - "nsx-unified-appliance-3.2.1.0.0.19801963.ova" defined in "nsx.content_library.ova_location"
 - Avi Controller:
-  - "controller-21.1.4-2p3-9009.ova" defined in "avi.content_library.ova_location"
+  - "controller-22.1.3-9096.ova" defined in "avi.content_library.ova_location"
 - TKG files:
   - "tanzu-cli-bundle-linux-amd64.tar.gz" defined in "tkg.tanzu_bin_location"
   - "kubectl-linux-v1.23.8+vmware.2.gz" defined in tkg.k8s_bin_location

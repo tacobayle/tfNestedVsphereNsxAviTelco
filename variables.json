@@ -71,7 +71,7 @@
     "username": "ubuntu",
     "ansible_core_version": "2.12.5",
     "ansible_version": "5.7.1",
-    "avi_sdk_version": "21.1.4",
+    "avi_sdk_version": "22.1.3",
     "netplanFile": "/etc/netplan/50-cloud-init.yaml"
   },
   "esxi": {
@@ -551,7 +551,7 @@
       "memory": 24768,
       "disk": 128,
       "basename": "avi-controller",
-      "version": "21.1.4",
+      "version": "22.1.3",
       "ssl_key_name": "avi.key",
       "ssl_cert_name": "avi.cert",
       "network_ref": "segment-mgmt"
