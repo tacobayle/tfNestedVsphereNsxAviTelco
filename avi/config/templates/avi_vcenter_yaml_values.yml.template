@@ -31,6 +31,9 @@ vcenter:
   cloud:
     name: ${cloud_name}
     dc: ${dc}
+    content_lib:
+      id: ${content_library_id}
+      name: ${content_library_name}
     dhcp_enabled: true
     networks: |
       ${networks}

@@ -17,10 +17,10 @@ data "vsphere_resource_pool" "resource_pool_nested" {
   datacenter_id = data.vsphere_datacenter.dc_nested.id
 }
 
-#resource "vsphere_content_library" "nested_library_avi" {
-#  name            = var.avi.config.content_library_avi
-#  storage_backing = [data.vsphere_datastore.datastore_nested.id]
-#}
+resource "vsphere_content_library" "nested_library_avi" {
+  name            = var.avi.config.content_library_avi
+  storage_backing = [data.vsphere_datastore.datastore_nested.id]
+}
 #
 #resource "vsphere_folder" "se_groups_folders" {
 #  count            = length(var.avi.config.service_engine_groups)

@@ -23,6 +23,8 @@ data "template_file" "avi_values" {
     vsphere_username = "administrator@${var.vcenter.sso.domain_name}"
     vsphere_password = var.vcenter_password
     vsphere_server = "${var.vcenter.name}.${var.dns.domain}"
+    content_library_id = vsphere_content_library.nested_library_avi.id
+    content_library_name = vsphere_content_library.nested_library_avi.name
     sslkeyandcertificate = jsonencode(var.avi.config.sslkeyandcertificate)
     portal_configuration = jsonencode(var.avi.config.portal_configuration)
     tenants = jsonencode(var.avi.config.tenants)

@@ -560,6 +560,7 @@
       "create": true,
       "avi_config_repo": "https://github.com/tacobayle/ansibleAviConfig",
       "avi_config_tag": "v1.89",
+      "content_library_avi": "avi_cloud_vcenter",
       "sslkeyandcertificate": [
         {
           "name": "tkg_cert",
