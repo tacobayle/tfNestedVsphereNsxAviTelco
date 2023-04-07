@@ -76,3 +76,27 @@ cd ../..
 cd avi/config
 rm -fr terraform.tfstate .terraform.lock.hcl .terraform
 cd ../..
+cd avi/tkg_cert
+rm -fr terraform.tfstate .terraform.lock.hcl .terraform
+cd ../..
+cd tkg/prep
+rm -fr terraform.tfstate .terraform.lock.hcl .terraform
+cd ../..
+cd tkg/mgmt_cluster_template
+rm -fr terraform.tfstate .terraform.lock.hcl .terraform
+cd ../..
+cd cd tkg/mgmt_cluster_build
+rm -fr terraform.tfstate .terraform.lock.hcl .terraform
+cd ../..
+cd tkg/workload_clusters_templates
+rm -fr terraform.tfstate .terraform.lock.hcl .terraform
+cd ../..
+cd tkg/workload_clusters_builds
+rm -fr terraform.tfstate .terraform.lock.hcl .terraform
+cd ../..
+cd tkg/workload_patching
+rm -fr terraform.tfstate .terraform.lock.hcl .terraform
+cd ../..
+cd tkg/ako
+rm -fr terraform.tfstate .terraform.lock.hcl .terraform
+cd ../..
