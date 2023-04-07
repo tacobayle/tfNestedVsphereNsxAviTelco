@@ -85,7 +85,7 @@ cd ../..
 cd tkg/mgmt_cluster_template
 rm -fr terraform.tfstate .terraform.lock.hcl .terraform
 cd ../..
-cd cd tkg/mgmt_cluster_build
+cd tkg/mgmt_cluster_build
 rm -fr terraform.tfstate .terraform.lock.hcl .terraform
 cd ../..
 cd tkg/workload_clusters_templates
